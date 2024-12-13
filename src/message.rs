@@ -118,7 +118,7 @@ extern "C" {
     fn nfq_get_physoutdev(nfad: NfqueueData) -> u32;
 
     fn nfq_get_packet_hw(nfad: NfqueueData) -> *const NfMsgPacketHw;
-    fn nfq_get_payload(nfad: NfqueueData, data: &*mut libc::c_void) -> libc::c_int;
+    fn nfq_get_payload(nfad: NfqueueData, data: &mut *mut libc::c_void) -> libc::c_int;
 
     // printing functions
     fn nfq_snprintf_xml(
@@ -301,11 +301,11 @@ impl Message {
     /// The actual amount and type of data retrieved by this function will
     /// depend on the mode set with the `set_mode()` function.
     pub fn get_payload(&self) -> &[u8] {
-        let c_ptr = std::ptr::null_mut();
-        let payload_len = unsafe { nfq_get_payload(self.nfad, &c_ptr) };
-        let payload: &[u8] =
-            unsafe { std::slice::from_raw_parts(c_ptr as *mut u8, payload_len as usize) };
-
+        let mut c_ptr = std::ptr::null_mut();
+        let payload_len = unsafe { nfq_get_payload(self.nfad, &mut c_ptr) };
+        let payload = unsafe {
+            std::slice::from_raw_parts(c_ptr as *mut _, payload_len as usize)
+        };
         payload
     }
 
