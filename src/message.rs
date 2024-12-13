@@ -65,12 +65,12 @@ pub enum XMLFormatFlags {
 }
 
 const NFQ_XML_HW: u32 = 1;
-const NFQ_XML_MARK: u32 = (1 << 1);
-const NFQ_XML_DEV: u32 = (1 << 2);
-const NFQ_XML_PHYSDEV: u32 = (1 << 3);
-const NFQ_XML_PAYLOAD: u32 = (1 << 4);
-const NFQ_XML_TIME: u32 = (1 << 5);
-const NFQ_XML_ALL: u32 = (!0u32);
+const NFQ_XML_MARK: u32 = 1 << 1;
+const NFQ_XML_DEV: u32 = 1 << 2;
+const NFQ_XML_PHYSDEV: u32 = 1 << 3;
+const NFQ_XML_PAYLOAD: u32 = 1 << 4;
+const NFQ_XML_TIME: u32 = 1 << 5;
+const NFQ_XML_ALL: u32 = !0u32;
 
 /// Hardware address
 #[repr(C)]
