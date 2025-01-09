@@ -52,6 +52,8 @@ mod hwaddr;
 pub use crate::message::*;
 mod message;
 
+use std::os::fd::FromRawFd;
+
 #[derive(Debug)]
 pub enum NfqueueError {
     /// The internal `nfq_open` failed.
@@ -98,7 +100,7 @@ extern "C" {
         data: *mut libc::c_void,
     ) -> NfqueueQueueHandle;
     fn nfq_destroy_queue(qh: NfqueueHandle) -> libc::c_int;
-    fn nfq_handle_packet(qh: NfqueueHandle, buf: *mut libc::c_void, rc: libc::c_int)
+    pub fn nfq_handle_packet(qh: NfqueueHandle, buf: *mut libc::c_void, rc: libc::c_int)
         -> libc::c_int;
     fn nfq_set_mode(gh: NfqueueQueueHandle, mode: u8, range: u32) -> libc::c_int;
     fn nfq_set_queuelen(gh: NfqueueQueueHandle, queuelen: u32) -> libc::c_int;
@@ -119,9 +121,9 @@ const NFQNL_COPY_PACKET: u8 = 0x02;
 
 /// Opaque struct `Queue`: abstracts an NFLOG queue
 pub struct Queue<T> {
-    qh: NfqueueHandle,
-    qqh: NfqueueQueueHandle,
-    cb: Option<fn(&Message, &mut T) -> ()>,
+    pub qh: NfqueueHandle,
+    pub qqh: NfqueueQueueHandle,
+    pub cb: Option<fn(&Message, &mut T) -> ()>,
     data: T,
 }
 
@@ -285,6 +287,17 @@ impl<T: Send> Queue<T> {
                 println!("error in nfq_handle_packet()");
             }; // not critical
         }
+    }
+    pub fn async_socket(&self) -> tokio::net::UnixDatagram {
+            let fd = self.fd();
+
+        let raw_fd = unsafe { std::os::unix::net::UnixDatagram::from_raw_fd(fd) };
+        raw_fd
+            .set_nonblocking(true)
+            .expect("Cannot set non blocking socket");
+        let fd_async =
+            tokio::net::UnixDatagram::from_std(raw_fd).expect("Cannot get unix datafram");
+        fd_async
     }
 }
 
